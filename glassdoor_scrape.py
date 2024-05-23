@@ -18,10 +18,12 @@ from threading import Thread
 #--------------------Setting Up Driver---------------------#
 def driver_setup():
   chrome_options = webdriver.ChromeOptions()
-  #chrome_options.add_argument('--headless')
+  chrome_options.add_argument('--headless')
   chrome_options.add_argument('--no-sandbox')
   chrome_options.add_argument('--disable-dev-shm-usage')
   chrome_options.add_argument("--disable-gpu")
+  user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36'
+  chrome_options.add_argument(f'user-agent={user_agent}')
   driver = webdriver.Chrome(executable_path='./chromedriver-linux64/chromedriver', options=chrome_options)
   return driver
 
@@ -55,7 +57,7 @@ def get_formated_url(salaries_url, job_title, country):
 
       dropdown_item_locator = (By.XPATH, f"//span[@class='query' and text()='{country}']")
 
-      dropdown_item = WebDriverWait(driver, 10).until(
+      dropdown_item = WebDriverWait(driver, 3).until(
          EC.visibility_of_element_located(dropdown_item_locator)
       )
 
@@ -68,12 +70,12 @@ def get_formated_url(salaries_url, job_title, country):
       pagination_locator_by_span = (By.XPATH, "//div[@data-test='pagination']")
       pagination_locator_by_p = (By.XPATH, "//p[@class='RecentSalariesReport_pageCount__me5vp']")
       try:
-         pagination = WebDriverWait(driver, 10).until(
+         pagination = WebDriverWait(driver, 3).until(
             EC.visibility_of_element_located(pagination_locator_by_span)
          )
          pagination = pagination.find_element(By.TAG_NAME, 'span').get_attribute('innerHTML')
       except:
-         pagination = WebDriverWait(driver,10).until(
+         pagination = WebDriverWait(driver,3).until(
             EC.visibility_of_element_located(pagination_locator_by_p)
          )
          pagination = pagination.get_attribute('innerHTML')
@@ -92,18 +94,29 @@ countries_list = pd.read_csv('./inputs/countries.csv')
 jobs_list = pd.read_csv('./inputs/jobs.csv')
 
 
+with open('data/urls_for_job_in_country.csv','w') as f:
+   f.write("""job\tcountry\tnumber_of_pages\tunique_url\n""")
 
-for i in range(10):
-   country = random.choice(countries_list['countries'])
-   job = random.choice(jobs_list['jobs'])
+count = 0
+total = 60*8
 
-   print(get_formated_url(salaries_url, job, country))
+for job in jobs_list['jobs']:
+   for country in countries_list['countries']:
+
+      unique_url, number_of_pages = get_formated_url(salaries_url, job, country)
+
+      with open('data/urls_for_job_in_country.csv', 'a') as f:
+         line = '\t'.join([job, country, number_of_pages, unique_url])
+         f.write(line+'\n')
+         count += 1
+         print(f"Completed: {count}, Left: {total-count}, Percentage Completed: {(count)/total*100:2f}")
+
 
 
 
 
 #----------------------------------------#
-
+"""
 count = 0
 
 def save_raw_html(element):
@@ -128,7 +141,7 @@ def get_html_elements(url):
     print(f"Wrote {count} divs..")
     print(driver.page_source)
     time.sleep(10)
-    driver.quit()
+    driver.quit()"""
 
 
 """for i in range(1,2):
