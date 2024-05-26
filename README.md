@@ -1,1 +1,1 @@
-# glassdoor_salary
+Web Scraper in Python to extract salary information for major Data Science related roles in top 59 countries in technological advancement, according to USNews.
